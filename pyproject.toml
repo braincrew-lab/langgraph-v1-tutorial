@@ -26,4 +26,7 @@ dependencies = [
     "python-dotenv>=1.2.1",
     "scikit-learn>=1.7.2",
     "seaborn>=0.13.2",
+    "langchain-community>=0.4.1",
+    "pdfplumber>=0.11.9",
+    "faiss-cpu>=1.13.2",
 ]
