@@ -1,26 +1,24 @@
 from langchain_core.output_parsers import StrOutputParser
 from langchain_community.vectorstores import FAISS
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from langchain.embeddings.cache import CacheBackedEmbeddings
-from langchain.storage import LocalFileStore
+from langchain_openai import OpenAIEmbeddings
+from langchain.chat_models import init_chat_model
+from langsmith import Client
 
 from abc import ABC, abstractmethod
 from operator import itemgetter
 from pathlib import Path
-import os
 import hashlib
-from langchain import hub
 
 
 class RetrievalChain(ABC):
     def __init__(self):
         self.source_uri = None
         self.k = 8
-        self.model_name = "gpt-4.1-mini"
+        # OpenAI 키 사용 시 gpt-5.2, gpt-4.1-mini 등으로 변경 가능
+        self.model_name = "claude-sonnet-4-5"
         self.temperature = 0
         self.prompt = "teddynote/rag-prompt"
         self.embeddings = "text-embedding-3-small"
-        self.cache_dir = Path(".cache/embeddings")
         self.index_dir = Path(".cache/faiss_index")
 
     @abstractmethod
@@ -38,30 +36,7 @@ class RetrievalChain(ABC):
         return text_splitter.split_documents(docs)
 
     def create_embedding(self):
-        try:
-            # 캐시 디렉토리 생성
-            self.cache_dir.mkdir(parents=True, exist_ok=True)
-
-            # 기본 임베딩 모델 생성
-            underlying_embeddings = OpenAIEmbeddings(model=self.embeddings)
-
-            # 파일 기반 캐시 스토어 생성
-            store = LocalFileStore(str(self.cache_dir))
-
-            # 캐시 기반 임베딩 생성 (SHA-256 사용으로 보안 강화)
-            cached_embeddings = CacheBackedEmbeddings.from_bytes_store(
-                underlying_embeddings, 
-                store, 
-                namespace=self.embeddings,
-                key_encoder="sha256"
-            )
-
-            return cached_embeddings
-
-        except Exception as e:
-            print(f"Warning: Failed to create cached embeddings: {e}")
-            print("Falling back to basic OpenAI embeddings without caching")
-            return OpenAIEmbeddings(model=self.embeddings)
+        return OpenAIEmbeddings(model=self.embeddings)
 
     def create_vectorstore(self, split_docs):
         try:
@@ -128,10 +103,10 @@ class RetrievalChain(ABC):
         return dense_retriever
 
     def create_model(self):
-        return ChatOpenAI(model_name=self.model_name, temperature=self.temperature)
+        return init_chat_model(self.model_name, temperature=self.temperature)
 
     def create_prompt(self):
-        return hub.pull(self.prompt)
+        return Client().pull_prompt(self.prompt)
 
     def create_chain(self):
         docs = self.load_documents(self.source_uri)

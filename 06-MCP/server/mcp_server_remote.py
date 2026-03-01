@@ -1,4 +1,4 @@
-from fastmcp import FastMCP
+from mcp.server.fastmcp import FastMCP
 from typing import Optional
 import pytz
 from datetime import datetime
@@ -7,6 +7,7 @@ from datetime import datetime
 mcp = FastMCP(
     "Current Time",  # MCP 서버 이름
     instructions="주어진 시간대의 현재 시간 정보를 제공합니다",
+    port=8002,  # HTTP 전송 시 사용할 포트
 )
 
 
@@ -44,4 +45,4 @@ if __name__ == "__main__":
     print("MCP Remote 서버가 실행 중입니다...")
 
     # streamable-http 전송 방식으로 서버를 시작합니다 (포트 8002)
-    mcp.run(transport="streamable-http", port=8002)
+    mcp.run(transport="streamable-http")

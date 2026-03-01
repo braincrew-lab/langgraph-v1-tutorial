@@ -1,4 +1,4 @@
-from fastmcp import FastMCP
+from mcp.server.fastmcp import FastMCP
 
 # FastMCP 서버 초기화 및 구성
 mcp = FastMCP(
